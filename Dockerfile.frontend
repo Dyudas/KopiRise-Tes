@@ -1,0 +1,49 @@
+# ==========================================
+# STAGE 1: BUILD FRONTEND SVELTEKIT
+# ==========================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Cache dependencies
+COPY frontend/package.json ./
+RUN npm install --ignore-scripts
+
+# Copy source code
+COPY frontend/ ./
+
+# Build SvelteKit with adapter-node
+ENV NODE_ENV=production
+RUN npm run build
+
+# Prune devDependencies
+RUN npm prune --production
+
+# ==========================================
+# STAGE 2: PRODUCTION RUNTIME
+# ==========================================
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Set Asia/Jakarta timezone
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Jakarta
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOST=0.0.0.0
+
+# Create non-root user
+USER node
+
+# Copy build output and production node_modules
+COPY --chown=node:node --from=builder /app/build ./build
+COPY --chown=node:node --from=builder /app/node_modules ./node_modules
+COPY --chown=node:node --from=builder /app/package.json ./package.json
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1
+
+CMD ["node", "build"]

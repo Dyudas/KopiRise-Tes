@@ -1,0 +1,51 @@
+# ==========================================
+# CADDY REVERSE PROXY FOR KOPIRISE PRODUCTION
+# ==========================================
+{$KOPIRISE_DOMAIN:localhost} {
+    # Otomatisasi HTTPS dengan ZeroSSL / Let's Encrypt
+    encode zstd gzip
+
+    # Header Keamanan Produksi
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    }
+
+    # REST API & File Uploads diarahkan ke Go Backend
+    handle /api/* {
+        reverse_proxy backend:8080 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /uploads/* {
+        reverse_proxy backend:8080
+    }
+
+    handle /healthz {
+        reverse_proxy backend:8080
+    }
+
+    handle /readyz {
+        reverse_proxy backend:8080
+    }
+
+    # Seluruh Halaman Web Publik & Admin diarahkan ke SvelteKit Node
+    handle {
+        reverse_proxy frontend:3000 {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    log {
+        output stdout
+        format console
+    }
+}

@@ -1,0 +1,109 @@
+# ==========================================
+# KopiRise - Git Ignore Configuration
+# Full-Stack Cafe & Resto Management System
+# ==========================================
+
+# 1. Environment Variables & Secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+*.crt
+# Allow example environment file to be committed
+!.env.example
+
+# 2. SQLite Database & Runtime Storage
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+*.sqlite
+*.sqlite3
+data/*.db
+data/*.db-shm
+data/*.db-wal
+data/*.sqlite*
+data/uploads/*
+!data/uploads/.gitkeep
+!data/.gitkeep
+
+# 3. Node.js & Frontend (SvelteKit / Vite / Tailwind)
+node_modules/
+frontend/node_modules/
+.svelte-kit/
+frontend/.svelte-kit/
+build/
+frontend/build/
+dist/
+frontend/dist/
+.pnpm-store/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.turbo/
+
+# 4. Go Backend (Golang)
+backend/bin/
+backend/dist/
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+# 5. Python (Testing & Utility Scripts)
+__pycache__/
+backend/scripts/__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+ENV/
+env/
+
+# 6. Backups & Temporary Files
+*.bak
+*.backup
+*.tmp
+*.temp
+*~
+index.html.bak
+
+# 7. Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 8. IDE & Editor Files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# 9. Docker & Testing Artifacts
+.docker/
+coverage/
+playwright-report/
+test-results/

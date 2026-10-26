@@ -1,0 +1,58 @@
+# ==========================================
+# STAGE 1: BUILD BACKEND (GO 1.22)
+# ==========================================
+FROM golang:1.22-alpine AS builder
+
+WORKDIR /app
+
+# Install git and ca-certificates
+RUN apk add --no-cache git ca-certificates tzdata
+
+# Cache dependencies
+COPY backend/go.mod backend/go.sum* ./
+RUN go mod download
+
+# Copy source code
+COPY backend/ ./
+
+# Build pure Go binary without CGO
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-s -w -X main.version=1.0.0" \
+    -trimpath \
+    -o /app/bin/kopirise-server ./cmd/server
+
+# ==========================================
+# STAGE 2: PRODUCTION RUNTIME
+# ==========================================
+FROM alpine:3.19
+
+# Security: Install timezone data and certificates
+RUN apk add --no-cache ca-certificates tzdata su-exec
+
+# Set Asia/Jakarta timezone
+ENV TZ=Asia/Jakarta
+
+# Create non-root user and group
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /app
+
+# Copy binary from builder
+COPY --from=builder /app/bin/kopirise-server /app/kopirise-server
+COPY --from=builder /app/migrations /app/migrations
+
+# Create data directories with permissions
+RUN mkdir -p /app/data/uploads/receipts /app/data/uploads/menu && \
+    chown -R appuser:appgroup /app
+
+# Persistent SQLite & Uploads volume
+VOLUME ["/app/data"]
+
+USER appuser
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:8080/healthz || exit 1
+
+ENTRYPOINT ["/app/kopirise-server"]
